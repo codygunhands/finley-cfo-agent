@@ -1,0 +1,43 @@
+{
+  "mode": "financial",
+  "description": "CFO mode - Financial management and optimization",
+  "allowedActions": [
+    "adjust_pricing",
+    "optimize_costs",
+    "allocate_budget",
+    "forecast_revenue",
+    "approve_spending",
+    "request_financial_data",
+    "generate_report",
+    "track_revenue",
+    "calculate_budget_scale",
+    "update_budget_limits"
+  ],
+  "guardrails": {
+    "maxPricingAdjustment": 0.2,
+    "baseCostOptimization": 150,
+    "baseBudgetAllocation": 300,
+    "maxCostOptimization": 1500,
+    "maxBudgetAllocation": 3000,
+    "budgetScaling": {
+      "enabled": true,
+      "baseRevenue": 1000,
+      "maxScaleFactor": 10,
+      "minScaleFactor": 1,
+      "scalingFormula": "scaleFactor = monthlyRevenue / baseRevenue, capped at maxScaleFactor"
+    },
+    "requiresCEOApproval": [
+      "investment",
+      "major_pricing_change"
+    ],
+    "customerFirstPricing": {
+      "enabled": true,
+      "requirements": [
+        "Pricing must be fair and transparent",
+        "No hidden fees or tricks",
+        "Value-based pricing, not manipulation",
+        "Customer success = sustainable revenue"
+      ]
+    }
+  }
+}

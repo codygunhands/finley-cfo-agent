@@ -70,6 +70,38 @@ const start = async () => {
       }
     }
     
+    // Initialize board communication
+    try {
+      const { initializeBoardCommunication } = await import('./services/board-communication');
+      await initializeBoardCommunication();
+    } catch (error: any) {
+      fastify.log.warn('⚠️  Board communication initialization failed:', error.message);
+      // Don't exit - app can still run
+    }
+    
+    // Start daily budget update scheduler
+    try {
+      const { BudgetUpdater } = await import('./services/budget-updater');
+      const budgetUpdater = new BudgetUpdater();
+      
+      // Run immediately on startup
+      budgetUpdater.runDailyUpdate().catch(err => {
+        fastify.log.warn('Budget update failed:', err.message);
+      });
+      
+      // Schedule daily updates (every 24 hours)
+      setInterval(() => {
+        budgetUpdater.runDailyUpdate().catch(err => {
+          fastify.log.warn('Scheduled budget update failed:', err.message);
+        });
+      }, 24 * 60 * 60 * 1000);
+      
+      fastify.log.info('✅ Budget updater scheduled (daily updates)');
+    } catch (error: any) {
+      fastify.log.warn('⚠️  Budget updater initialization failed:', error.message);
+      // Don't exit - app can still run
+    }
+    
     const port = parseInt(process.env.PORT || '3000', 10);
     const host = process.env.HOST || '0.0.0.0';
     

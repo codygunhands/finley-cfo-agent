@@ -195,8 +195,8 @@ export class AgentService {
       ['approve_initiative', 'reject_initiative', 'make_decision', 'allocate_resources'].includes(a.type)
     )) {
       try {
-        const { DecisionTracker } = await import('./decision-tracker');
-        const tracker = new DecisionTracker();
+        // const { DecisionTracker } = await import('./decision-tracker');
+        // const tracker = new DecisionTracker();
         
         // Calculate confidence based on response quality
         const confidence = this.calculateConfidence(finalResponse, validActions, citations);
@@ -209,25 +209,27 @@ export class AgentService {
           return sum;
         }, 0);
         
-        const riskLevel = tracker.assessRisk(
-          budgetImpact,
-          'medium', // strategic impact
-          true, // reversibility
-          citations.length // consultation count
-        );
+        // const riskLevel = tracker.assessRisk(
+        //   budgetImpact,
+        //   'medium', // strategic impact
+        //   true, // reversibility
+        //   citations.length // consultation count
+        // );
+        // Simplified risk assessment (DecisionTracker disabled)
+        const riskLevel = budgetImpact > 10000 ? 'high' : budgetImpact > 1000 ? 'medium' : 'low';
         
-        tracker.recordDecision({
-          member: aiEmployee,
-          type: validActions.find(a => a.type === 'approve_initiative') ? 'approval' :
-                validActions.find(a => a.type === 'reject_initiative') ? 'rejection' :
-                validActions.find(a => a.type === 'allocate_resources') ? 'resource_allocation' : 'proposal',
-          description: finalResponse.substring(0, 200),
-          confidence,
-          riskLevel,
-          consultedMembers: [],
-          budgetImpact,
-          rationale: finalResponse,
-        });
+        // tracker.recordDecision({
+        //   member: aiEmployee,
+        //   type: validActions.find(a => a.type === 'approve_initiative') ? 'approval' :
+        //         validActions.find(a => a.type === 'reject_initiative') ? 'rejection' :
+        //         validActions.find(a => a.type === 'allocate_resources') ? 'resource_allocation' : 'proposal',
+        //   description: finalResponse.substring(0, 200),
+        //   confidence,
+        //   riskLevel,
+        //   consultedMembers: [],
+        //   budgetImpact,
+        //   rationale: finalResponse,
+        // });
       } catch (error) {
         // Don't fail the request if decision tracking fails
         console.error('Failed to track decision:', error);

@@ -1,7 +1,7 @@
 import Fastify, { FastifyRequest, FastifyReply } from 'fastify';
 import { agentRoutes } from './routes/agent';
 import { internalRoutes } from './routes/internal';
-import { boardRoutes } from './routes/board';
+// import { boardRoutes } from './routes/board';
 import { migrationRoutes } from './routes/migrations';
 
 const fastify = Fastify({
@@ -16,10 +16,27 @@ const fastify = Fastify({
   },
 });
 
+// Global error handler
+fastify.setErrorHandler((error, request, reply) => {
+  fastify.log.error({
+    err: error,
+    url: request.url,
+    method: request.method,
+  }, 'Unhandled error');
+  
+  const statusCode = error.statusCode || 500;
+  const message = error.message || 'Internal server error';
+  
+  reply.status(statusCode).send({
+    error: message,
+    message: (process.env.NODE_ENV === 'development' || process.env.LOG_LEVEL === 'debug') ? error.message : undefined,
+  });
+});
+
 // Register routes
 fastify.register(agentRoutes);
 fastify.register(internalRoutes, { prefix: '/internal' });
-fastify.register(boardRoutes);
+// fastify.register(boardRoutes);
 fastify.register(migrationRoutes);
 
 // Rate limiting middleware (simple in-memory for now)
@@ -57,6 +74,14 @@ const start = async () => {
       try {
         fastify.log.info('Running database migrations on startup...');
         const { execSync } = require('child_process');
+        // Generate Prisma client first
+        execSync('npx prisma generate', {
+          encoding: 'utf-8',
+          env: { ...process.env },
+          stdio: 'inherit',
+          timeout: 60000,
+        });
+        // Then run migrations
         execSync('npx prisma migrate deploy', {
           encoding: 'utf-8',
           env: { ...process.env },
@@ -65,9 +90,12 @@ const start = async () => {
         });
         fastify.log.info('✅ Migrations completed');
       } catch (migrationError: any) {
-        fastify.log.warn('⚠️  Migrations failed (will retry via endpoint):', migrationError.message);
-        // Don't exit - app can still run, migrations can be run manually
+        fastify.log.error('❌ Migrations failed:', migrationError.message);
+        fastify.log.error('   This will cause 500 errors. Migrations must succeed for the app to work.');
+        // Don't exit - let the app start but it will fail on requests
       }
+    } else {
+      fastify.log.warn('⚠️  DATABASE_URL not set - migrations skipped');
     }
     
     // Initialize board communication
@@ -102,7 +130,7 @@ const start = async () => {
       // Don't exit - app can still run
     }
     
-    const port = parseInt(process.env.PORT || '3000', 10);
+    const port = parseInt(process.env.PORT || '8080', 10);
     const host = process.env.HOST || '0.0.0.0';
     
     await fastify.listen({ port, host });

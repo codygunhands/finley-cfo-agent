@@ -57,6 +57,7 @@ export class KnowledgeBase {
       operator: ['onboarding_steps.md', 'support_playbook.md'],
       marketing: ['marketing_playbook.md'],
       financial: ['financial_framework.md'],
+      strategic: [],
     };
     
     // For financial mode, load from cfo subdirectory
